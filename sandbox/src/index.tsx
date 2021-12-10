@@ -3,10 +3,16 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { ChakraProvider } from '@chakra-ui/react';
+import { DeviceContextProvider } from './context/contexts';
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <ChakraProvider>
+      <DeviceContextProvider>
+        <App />
+      </DeviceContextProvider>
+    </ChakraProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );

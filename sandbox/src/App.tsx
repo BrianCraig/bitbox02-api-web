@@ -1,25 +1,33 @@
-import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import { Button, Center, Heading, Stack, Text } from '@chakra-ui/react';
+import { FunctionComponent, useContext } from 'react';
+import { DeviceContext } from './context/contexts';
+
+const DeviceInfo: FunctionComponent = () => {
+  const { info } = useContext(DeviceContext);
+  if (!info) return null;
+
+  const {
+    version: { major, minor, patch },
+    platformId,
+    editionId,
+    unlocked
+  } = info;
+
+  return <Text>Connected, version {major}.{minor}.{patch} platform: {platformId} edition: {editionId} unlocked: {unlocked ? "yes" : "no"}</Text>
+}
 
 function App() {
+  const { connect } = useContext(DeviceContext);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Center h='100vh'>
+      <Stack direction={"column"}>
+        <Heading>BitBox 02 WebHID</Heading>
+        <DeviceInfo />
+        <Button onClick={connect}>Connect</Button>
+      </Stack>
+    </Center>
   );
 }
 
