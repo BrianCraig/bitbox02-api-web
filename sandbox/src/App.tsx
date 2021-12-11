@@ -18,7 +18,7 @@ const DeviceInfo: FunctionComponent = () => {
 }
 
 function App() {
-  const { connect } = useContext(DeviceContext);
+  const { connect, device } = useContext(DeviceContext);
 
   return (
     <Center h='100vh'>
@@ -26,6 +26,7 @@ function App() {
         <Heading>BitBox 02 WebHID</Heading>
         <DeviceInfo />
         <Button onClick={connect}>Connect</Button>
+        <Button onClick={device?.close}>Close</Button>
       </Stack>
     </Center>
   );

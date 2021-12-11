@@ -16,7 +16,6 @@ export interface Info {
 export const infoDigest = (data: Uint8Array): Info => {
     const vLength = data[0];
     const vString = textDecoder.decode(data.slice(1, 1 + vLength));
-    console.log(vString.match(/[0-9]+/g))
     const info = data.slice(1 + vLength);
     const versions = vString.match(/[0-9]+/g)!.map(parseFloat);
     return {

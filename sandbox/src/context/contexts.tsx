@@ -6,6 +6,7 @@ interface Context {
   connected: boolean
   connect: () => void
   info?: Info
+  device? :Device
 }
 
 export const DeviceContext = createContext<Context>({} as any);
@@ -17,6 +18,7 @@ export const DeviceContextProvider: FunctionComponent = ({children}) => {
   return <DeviceContext.Provider value={{
     connected: !!device,
     connect,
-    info: device?.info
+    info: device?.info,
+    device
   }}>{children}</DeviceContext.Provider>
 }

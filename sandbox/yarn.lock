@@ -8328,6 +8328,11 @@ node-releases@^1.1.61, node-releases@^1.1.70:
   resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-1.1.70.tgz#66e0ed0273aa65666d7fe78febe7634875426a08"
   integrity sha512-Slf2s69+2/uAD79pVVQo8uSiC34+g8GWY8UH2Qtqv34ZfhYrxpYpfzs9Js9d6O0mbDmALuxaTlplnBTnSELcrw==
 
+noise-c.wasm@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/noise-c.wasm/-/noise-c.wasm-0.4.0.tgz#9f492e0919be265143756016f7d8cfc15b5617b4"
+  integrity sha512-dGkimM3UFKmidIBnI1SKSO+VqFT20xQoCJ194rf25huVIxdfwRf34ZVNsdSYpWYHHUQ4QS1vawvLThJKSMiIFw==
+
 normalize-package-data@^2.3.2, normalize-package-data@^2.5.0:
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/normalize-package-data/-/normalize-package-data-2.5.0.tgz#e66db1838b200c1dfc233225d12cb36520e234a8"

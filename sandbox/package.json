@@ -16,6 +16,7 @@
     "@types/w3c-web-hid": "1.0.2",
     "framer-motion": "4",
     "hello-wasm-pack": "../pkg",
+    "noise-c.wasm": "^0.4.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "4.0.3",
