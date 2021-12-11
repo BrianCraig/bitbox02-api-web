@@ -6,28 +6,31 @@
     "@chakra-ui/react": "^1.7.3",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
+    "@types/w3c-web-hid": "1.0.2",
+    "framer-motion": "4",
+    "hello-wasm-pack": "../pkg",
+    "react": "^17.0.2",
+    "react-scripts": "4.0.3",
+    "react-app-rewired": "^2.1.8",
+    "react-dom": "^17.0.2",
+    "typescript": "^4.1.2",
+    "wasm-loader": "^1.3.0",
+    "web-vitals": "^1.0.1"
+  },
+  "devDependencies": {
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "@types/jest": "^26.0.15",
     "@types/node": "^12.0.0",
     "@types/react": "^17.0.0",
-    "@types/react-dom": "^17.0.0",
-    "@types/w3c-web-hid": "1.0.2",
-    "framer-motion": "4",
-    "hello-wasm-pack": "../pkg",
-    "noise-c.wasm": "^0.4.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-scripts": "4.0.3",
-    "typescript": "^4.1.2",
-    "web-vitals": "^1.0.1"
+    "@types/react-dom": "^17.0.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject"
   },
   "eslintConfig": {
     "extends": [
