@@ -27,6 +27,7 @@ function App() {
         <DeviceInfo />
         <Button onClick={connect}>Connect</Button>
         <Button onClick={device?.close}>Close</Button>
+        <Button onClick={() => device?.eth().then(console.log)}>Eth</Button>
       </Stack>
     </Center>
   );

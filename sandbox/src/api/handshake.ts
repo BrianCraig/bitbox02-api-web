@@ -1,4 +1,4 @@
-import { SendHID } from './device'
+import { Encryption, SendHID } from './device'
 import { u8join } from './utils';
 const Rust = import('hello-wasm-pack');
 
@@ -26,7 +26,20 @@ export const handshake = async (send: SendHID) => {
   let share = new Uint8Array(64)
   r.write(new Uint8Array(), share);
 
-  let res = await send(u8join(inHandshake, share));
+  await send(u8join(inHandshake, share));
 
-  return res[2];
+  const crypto: Encryption = {
+    encrypt: (data) => {
+      let out = new Uint8Array(data.length + 16);
+      r.encrypt(data, out);
+      return out
+    },
+    decrypt: (data) => {
+      let out = new Uint8Array(data.length - 16);
+      r.decrypt(data, out);
+      return out
+    }
+  }
+
+  return crypto;
 }

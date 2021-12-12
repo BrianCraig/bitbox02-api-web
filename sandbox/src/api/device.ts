@@ -1,6 +1,9 @@
 import { handshake } from "./handshake"
 import { Info, infoDigest, infoRequest } from "./messages"
 import { packagesToBytes, bytesToPackages, headerInfo } from "./uh2Frame"
+import { ETHCoin, ETHPubRequest, ETHRequest, ETHResponse } from '../proto/eth_pb';
+import { Request, Response } from '../proto/hww_pb'
+import { getKeypathFromString, u8join } from "./utils";
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -11,14 +14,39 @@ const retryPacket = bytesToPackages(Uint8Array.from([1]))[0];
 const showCode = Uint8Array.from([0, 118]);
 
 export type SendHID = (data: Uint8Array) => Promise<Uint8Array>
+
+export interface Encryption {
+  encrypt: (data: Uint8Array) => Uint8Array
+  decrypt: (data: Uint8Array) => Uint8Array
+}
 export interface Device {
   send: SendHID
   info: Info
   close: () => void
+  eth: () => Promise<Response.AsObject>
 }
 interface connectOptions {
   onInfo?: (info: Info) => any;
   onClose?: () => any;
+}
+
+const withOp = (data: Uint8Array) => u8join(Uint8Array.from([0, 110]), data) 
+const withoutOp = (data: Uint8Array) => data.slice(2) 
+
+const ethPublic = (send: SendHID, {encrypt, decrypt}: Encryption ) => async (): Promise<Response.AsObject> => {
+  let req = new ETHPubRequest()
+  req.setCoin(ETHCoin.ETH)
+  req.setKeypathList(getKeypathFromString("m/44'/60'/0'/0/0"))
+  req.setDisplay(true)
+  req.setOutputType(ETHPubRequest.OutputType.ADDRESS)
+  req.setContractAddress(new Uint8Array())
+  let wr = new ETHRequest();
+  wr.setPub(req);
+  let wr2 = new Request();
+  wr2.setEth(wr);
+  let data = wr2.serializeBinary();
+  let resp = decrypt(withoutOp(await send(withOp(encrypt(data)))));
+  return Response.deserializeBinary(resp).toObject();
 }
 
 export const connect = async ({ onInfo }: connectOptions = {}): Promise<Device> => {
@@ -66,18 +94,19 @@ export const connect = async ({ onInfo }: connectOptions = {}): Promise<Device> 
   const info = infoDigest(await send(infoRequest()));
   onInfo?.(info);
 
-  let status = await handshake(send);
+  let enc = await handshake(send);
 
-  if(status === 1){
+  //if(status === 1){
     let status = await(send(showCode));
     if(status[1] === 1){
       throw new Error("Pairing code not accepted")
     }
-  }
+  //}
 
   return ({
     send,
     info,
-    close: () => HID.close()
+    close: () => HID.close(),
+    eth: ethPublic(send, enc)
   })
 }

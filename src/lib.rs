@@ -47,4 +47,15 @@ impl Noise {
             _ => ()
         }
     }
+
+    pub fn encrypt(&mut self,x: &mut [u8],y: &mut [u8]) {
+        self.hs.get_ciphers().0.encrypt(x, y);
+    }
+    
+    pub fn decrypt(&mut self,x: &mut [u8],y: &mut [u8]) {
+        match self.hs.get_ciphers().1.decrypt(x, y) {
+            Err(e) => println!("asd{:?}", e),
+            _ => ()
+        }
+    }
 }
