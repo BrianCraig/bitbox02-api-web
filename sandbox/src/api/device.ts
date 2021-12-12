@@ -1,9 +1,10 @@
-import { handshake } from "./handshake"
-import { Info, infoDigest, infoRequest } from "./messages"
+import { handshake, initialize } from "./handshake"
+import { Info, infoQuery } from "./messages"
 import { packagesToBytes, bytesToPackages, headerInfo } from "./uh2Frame"
-import { ETHCoin, ETHPubRequest, ETHRequest, ETHResponse } from '../proto/eth_pb';
+import { ETHCoin, ETHPubRequest, ETHRequest } from '../proto/eth_pb';
 import { Request, Response } from '../proto/hww_pb'
 import { getKeypathFromString, u8join } from "./utils";
+import { DevicePairingRejected, NotCompatibleBrowser } from "./errors";
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -50,6 +51,7 @@ const ethPublic = (send: SendHID, {encrypt, decrypt}: Encryption ) => async (): 
 }
 
 export const connect = async ({ onInfo }: connectOptions = {}): Promise<Device> => {
+  if(!window.navigator.hid) throw NotCompatibleBrowser;
   const HIDs = await window.navigator.hid.requestDevice({ filters: [{ vendorId: 0x03eb }] })
   const HID = HIDs[0]
   await HID.open()
@@ -91,21 +93,37 @@ export const connect = async ({ onInfo }: connectOptions = {}): Promise<Device> 
     })
     return prom;
   }
-  const info = infoDigest(await send(infoRequest()));
-  onInfo?.(info);
 
-  let enc = await handshake(send);
+  let device: Pick<Device, "send" | "info"> = {
+    send,
+    info: {}
+  }; 
 
-  //if(status === 1){
-    let status = await(send(showCode));
+  let info = {};
+  Object.defineProperty(device, 'info', {
+    get: function() { return info; },
+    set: function(newValue) { info = newValue; onInfo?.(newValue) },
+    enumerable: true,
+    configurable: true
+  });
+
+  await infoQuery(device);
+
+  await initialize(device);
+
+  let enc = await handshake(device);
+
+  if(!device.info.deviceAcceptedPairing) {
+    let status = await(device.send(showCode));
     if(status[1] === 1){
-      throw new Error("Pairing code not accepted")
+      device.info = {...device.info, deviceAcceptedPairing: false}
+      throw DevicePairingRejected
     }
-  //}
+    device.info = {...device.info, deviceAcceptedPairing: true}
+  }
 
   return ({
-    send,
-    info,
+    ...device,
     close: () => HID.close(),
     eth: ethPublic(send, enc)
   })
