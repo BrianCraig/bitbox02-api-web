@@ -1,5 +1,6 @@
 import { createContext, FunctionComponent, useState } from "react";
 import { connect as deviceConnect, Device } from "../api/device";
+import { BitBoxError } from "../api/errors";
 import { Info } from "../api/messages";
 import { useAsync } from "../utils/hooks";
 
@@ -16,15 +17,23 @@ export const DeviceContext = createContext<Context>({} as any);
 
 export const DeviceContextProvider: FunctionComponent = ({children}) => {
   const [info, setInfo] = useState<Info>({});
-  const {execute: connect, error, status, value: device} = useAsync(() => deviceConnect({
-    onInfo: setInfo
+  const [closeError, setCloseError] = useState<BitBoxError>();
+  const {execute, error, status, value: device} = useAsync(() => deviceConnect({
+    onInfo: setInfo,
+    onClose: setCloseError
   }), false);
 
+  let connect = () => {
+    execute();
+    setInfo({});
+    setCloseError(undefined);
+  }
+
   return <DeviceContext.Provider value={{
-    connected: status === "success",
     connect,
+    connected: (status === "success") && !closeError, 
     connecting: status === "pending",
-    error,
+    error: error || closeError,
     info,
     device
   }}>{children}</DeviceContext.Provider>

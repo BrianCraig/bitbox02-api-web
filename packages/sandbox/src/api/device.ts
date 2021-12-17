@@ -63,10 +63,10 @@ export const connect = async ({ onInfo, onClose }: connectOptions = {}): Promise
   }
 
   let listenDisconnects = (event: HIDConnectionEvent) => {
-    if(Object.is(event.target, HID)){
+    if(Object.is(event.device, HID)){
+      window.navigator.hid.removeEventListener("disconnect", listenDisconnects);
       onClose?.(DeviceExternallyClosed);
     }
-    window.navigator.hid.removeEventListener("disconnect", listenDisconnects)
   }
 
   window.navigator.hid.addEventListener("disconnect", listenDisconnects)
