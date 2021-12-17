@@ -1,0 +1,33 @@
+name: Build
+on:
+  push:
+    branches: [ main ]
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '16.x'
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: install deps
+        run: make install-deps
+      - name: build
+        run: make build
+      - name: Upload sandbox
+        uses: actions/upload-artifact@v2
+        with:
+          name: sandbox
+          path: packages/sandbox-build
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
