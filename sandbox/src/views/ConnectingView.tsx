@@ -62,12 +62,13 @@ const ConnectingState = () => {
 }
 
 export const ConnectingView = () => {
+  let { error } = useContext(DeviceContext);
   return <Fragment>
     <ConnectingBadges />
     <ConnectingState />
-    <Alert status='error' rounded={8}>
+    { error && <Alert status='error' rounded={8}>
       <AlertIcon />
-      <AlertDescription>Not Supported Browser</AlertDescription>
-    </Alert>
+      <AlertDescription>{error.message}</AlertDescription>
+    </Alert> }
   </Fragment>
 }

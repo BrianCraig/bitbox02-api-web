@@ -4,7 +4,7 @@ import { packagesToBytes, bytesToPackages, headerInfo } from "./uh2Frame"
 import { ETHCoin, ETHPubRequest, ETHRequest } from '../proto/eth_pb';
 import { Request, Response } from '../proto/hww_pb'
 import { getKeypathFromString, u8join } from "./utils";
-import { DevicePairingRejected, NotCompatibleBrowser } from "./errors";
+import { DeviceExternallyClosed, DevicePairingRejected, NoDeviceSelected, NotCompatibleBrowser, BitBoxError, DeviceClosedByApp } from "./errors";
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -28,7 +28,7 @@ export interface Device {
 }
 interface connectOptions {
   onInfo?: (info: Info) => any;
-  onClose?: () => any;
+  onClose?: (error: BitBoxError) => any;
 }
 
 const withOp = (data: Uint8Array) => u8join(Uint8Array.from([0, 110]), data) 
@@ -50,11 +50,26 @@ const ethPublic = (send: SendHID, {encrypt, decrypt}: Encryption ) => async (): 
   return Response.deserializeBinary(resp).toObject();
 }
 
-export const connect = async ({ onInfo }: connectOptions = {}): Promise<Device> => {
+export const connect = async ({ onInfo, onClose }: connectOptions = {}): Promise<Device> => {
   if(!window.navigator.hid) throw NotCompatibleBrowser;
   const HIDs = await window.navigator.hid.requestDevice({ filters: [{ vendorId: 0x03eb }] })
+  if(HIDs.length === 0){
+    throw NoDeviceSelected;
+  }
   const HID = HIDs[0]
-  await HID.open()
+
+  if(!HID.opened) {
+    await HID.open()
+  }
+
+  let listenDisconnects = (event: HIDConnectionEvent) => {
+    if(Object.is(event.target, HID)){
+      onClose?.(DeviceExternallyClosed);
+    }
+    window.navigator.hid.removeEventListener("disconnect", listenDisconnects)
+  }
+
+  window.navigator.hid.addEventListener("disconnect", listenDisconnects)
 
   const send = async (data: Uint8Array): Promise<Uint8Array> => {
     const start = performance.now();
@@ -68,26 +83,34 @@ export const connect = async ({ onInfo }: connectOptions = {}): Promise<Device> 
     }
     console.log(info);
     bytesToPackages(data).forEach((packet) => HID.sendReport(0, packet));
-    let prom = new Promise<Uint8Array>((resolver) => {
+    let prom = new Promise<Uint8Array>((resolver, rejected) => {
       const allPackets: Uint8Array[] = [];
       HID.oninputreport = ({ data }) => {
-        const packet = new Uint8Array(data.buffer)
-        if(allPackets.length === 0 && packet[7] === 1) { //waiting for input
-          sleep(200).then(() => HID.sendReport(0, retryPacket));
-          info.waitFrames++;
-          return;
-        }
-        allPackets.push(packet)
-        const { packets } = headerInfo(allPackets[0]);
-        if(allPackets.length === packets){
-          const receivedData = packagesToBytes(allPackets);
-          info.time = (performance.now() - start).toFixed(6);
-          info.received = {
-            data: receivedData,
-            opCode: receivedData[0],
-            query: receivedData[0] === 0 ? receivedData[1] : undefined
+        try {
+          const packet = new Uint8Array(data.buffer)
+          if(allPackets.length === 0 && packet[7] === 1) { //waiting for input
+            sleep(200).then(() => HID.sendReport(0, retryPacket)).catch(() => rejected(DeviceExternallyClosed));
+            info.waitFrames++;
+            return;
           }
-          resolver(receivedData);
+          allPackets.push(packet)
+          const { packets } = headerInfo(allPackets[0]);
+          if(allPackets.length === packets){
+            const receivedData = packagesToBytes(allPackets);
+            info.time = (performance.now() - start).toFixed(6);
+            info.received = {
+              data: receivedData,
+              opCode: receivedData[0],
+              query: receivedData[0] === 0 ? receivedData[1] : undefined
+            }
+            resolver(receivedData);
+          }
+        } catch (e) {
+          if (e instanceof DOMException) {
+            rejected(DeviceExternallyClosed);
+          } else {
+            rejected(e);
+          }
         }
       }
     })
@@ -124,7 +147,11 @@ export const connect = async ({ onInfo }: connectOptions = {}): Promise<Device> 
 
   return ({
     ...device,
-    close: () => HID.close(),
+    close: () => {
+      window.navigator.hid.removeEventListener("disconnect", listenDisconnects)
+      HID.close()
+      onClose?.(DeviceClosedByApp)
+    },
     eth: ethPublic(send, enc)
   })
 }
