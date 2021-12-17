@@ -1,5 +1,5 @@
 [package]
-name = "rustwasm"
+name = "noise-wasm"
 version = "0.1.0"
 authors = ["Brian Craig <briancraigok@gmail.com>"]
 edition = "2018"
