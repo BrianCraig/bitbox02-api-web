@@ -1,10 +1,8 @@
 import { handshake, initialize } from "./handshake"
 import { Info, infoQuery } from "./messages"
 import { packagesToBytes, bytesToPackages, headerInfo } from "./uh2Frame"
-import { ETHCoin, ETHPubRequest, ETHRequest } from '../proto/eth_pb';
-import { Request, Response } from '../proto/hww_pb'
-import { getKeypathFromString, u8join } from "./utils";
 import { DeviceExternallyClosed, DevicePairingRejected, NoDeviceSelected, NotCompatibleBrowser, BitBoxError, DeviceClosedByApp } from "./errors";
+import { ethPublic, ethPublicArgs } from "./eth_messages";
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -24,30 +22,11 @@ export interface Device {
   send: SendHID
   info: Info
   close: () => void
-  eth: () => Promise<Response.AsObject>
+  ethPublic: (data: ethPublicArgs) => Promise<string>
 }
 interface connectOptions {
   onInfo?: (info: Info) => any;
   onClose?: (error: BitBoxError) => any;
-}
-
-const withOp = (data: Uint8Array) => u8join(Uint8Array.from([0, 110]), data) 
-const withoutOp = (data: Uint8Array) => data.slice(2) 
-
-const ethPublic = (send: SendHID, {encrypt, decrypt}: Encryption ) => async (): Promise<Response.AsObject> => {
-  let req = new ETHPubRequest()
-  req.setCoin(ETHCoin.ETH)
-  req.setKeypathList(getKeypathFromString("m/44'/60'/0'/0/0"))
-  req.setDisplay(true)
-  req.setOutputType(ETHPubRequest.OutputType.ADDRESS)
-  req.setContractAddress(new Uint8Array())
-  let wr = new ETHRequest();
-  wr.setPub(req);
-  let wr2 = new Request();
-  wr2.setEth(wr);
-  let data = wr2.serializeBinary();
-  let resp = decrypt(withoutOp(await send(withOp(encrypt(data)))));
-  return Response.deserializeBinary(resp).toObject();
 }
 
 export const connect = async ({ onInfo, onClose }: connectOptions = {}): Promise<Device> => {
@@ -152,6 +131,6 @@ export const connect = async ({ onInfo, onClose }: connectOptions = {}): Promise
       HID.close()
       onClose?.(DeviceClosedByApp)
     },
-    eth: ethPublic(send, enc)
+    ethPublic: ethPublic(send, enc)
   })
 }

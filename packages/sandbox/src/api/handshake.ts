@@ -1,5 +1,6 @@
 import { Device, Encryption } from './device'
 import { u8join } from './utils';
+
 const Rust = import('noise-wasm');
 
 const fakeAttestation = Uint8Array.from([0, 97, 39, 192, 192, 192, 72, 254, 120, 86, 137, 4, 226, 24, 107, 229, 59, 102, 237, 166, 155, 79, 42, 155, 132, 103, 119, 237, 246, 254, 75, 172, 108, 74])

@@ -1,6 +1,6 @@
-import { Alert, AlertDescription, AlertIcon, Box, List, ListIcon, ListItem, Stack, Tag, TagLabel, TagLeftIcon } from "@chakra-ui/react"
+import { useContext } from "react";
+import { Alert, AlertDescription, AlertIcon, Box, Button, List, ListIcon, ListItem, Stack, Tag, TagLabel, TagLeftIcon } from "@chakra-ui/react"
 import { CheckIcon, UnlockIcon, TimeIcon, LockIcon, ViewIcon, ViewOffIcon } from "@chakra-ui/icons"
-import { Fragment, useContext } from "react";
 import { DeviceContext } from "../context/contexts";
 
 const ConnectingBadges = () => {
@@ -62,13 +62,15 @@ const ConnectingState = () => {
 }
 
 export const ConnectingView = () => {
-  let { error } = useContext(DeviceContext);
-  return <Fragment>
+  const { connect, connecting, connected, error } = useContext(DeviceContext);
+
+  return <Stack direction={"column"} maxWidth={540} width={540} margin={4}>
     <ConnectingBadges />
     <ConnectingState />
-    { error && <Alert status='error' rounded={8}>
+    {error && <Alert status='error' rounded={8}>
       <AlertIcon />
       <AlertDescription>{error.message}</AlertDescription>
-    </Alert> }
-  </Fragment>
+    </Alert>}
+    <Button onClick={connect} colorScheme={"blue"} isLoading={connecting} loadingText={"Connecting..."} disabled={connected || connecting}>Connect</Button>
+  </Stack>
 }

@@ -39,3 +39,6 @@ const HARDENED = 0x80000000;
       return x;
   })
 }
+
+export const withOp = (data: Uint8Array) => u8join(Uint8Array.from([0, 110]), data) 
+export const withoutOp = (data: Uint8Array) => data.slice(2) 
