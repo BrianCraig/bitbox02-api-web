@@ -2,6 +2,7 @@ import { ETHPubRequest, ETHCoin, ETHRequest } from "../proto/eth_pb"
 import { Request, Response } from '../proto/hww_pb'
 
 import { SendHID, Encryption } from "./device"
+import { BitBoxError } from "./errors"
 import { withOp, withoutOp } from "./utils"
 
 export interface ethPublicArgs {
@@ -21,5 +22,9 @@ export const ethPublic = (send: SendHID, {encrypt, decrypt}: Encryption ) => asy
   wr2.setEth(wr);
   let data = wr2.serializeBinary();
   let resp = decrypt(withoutOp(await send(withOp(encrypt(data)))));
-  return Response.deserializeBinary(resp).toObject().eth!.pub!.pub;
+  let obj = Response.deserializeBinary(resp).toObject();
+  if (obj.error) {
+    throw new BitBoxError(obj.error.message, obj.error.code);
+  }
+  return obj.eth!.pub!.pub;
 }
